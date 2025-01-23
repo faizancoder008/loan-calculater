@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elite Loan Calculator with Currency Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .calculator {
+      max-width: 600px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+
+    .calculator h2 {
+      text-align: center;
+      color: #00ffff;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      color: #00ffcc;
+      margin-bottom: 5px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #00cccc;
+      border-radius: 5px;
+      background: #1b1b2f;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    button {
+      background-color: #00ffff;
+      color: #000;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #00ccff;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 1px solid #00cccc;
+      border-radius: 5px;
+      color: #00ffcc;
+    }
+
+    .result strong {
+      color: #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h2>Elite Loan Calculator with Currency Converter</h2>
+    <div class="form-group">
+      <label for="loanAmount">Loan Amount:</label>
+      <input type="number" id="loanAmount" placeholder="Enter loan amount">
+    </div>
+    <div class="form-group">
+      <label for="interestRate">Interest Rate (%):</label>
+      <input type="number" id="interestRate" placeholder="Enter annual interest rate">
+    </div>
+    <div class="form-group">
+      <label for="loanTerm">Loan Term (years):</label>
+      <input type="number" id="loanTerm" placeholder="Enter loan term in years">
+    </div>
+    <div class="form-group">
+      <label for="currency">From Currency:</label>
+      <select id="currency">
+        <option value="USD">USD</option>
+        <option value="PKR">PKR</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="INR">INR</option>
+        <option value="AUD">AUD</option>
+        <option value="CAD">CAD</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+        <!-- Add more currencies -->
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="convertTo">To Currency:</label>
+      <select id="convertTo">
+        <option value="USD">USD</option>
+        <option value="PKR">PKR</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+        <option value="INR">INR</option>
+        <option value="AUD">AUD</option>
+        <option value="CAD">CAD</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+        <!-- Add more currencies -->
+      </select>
+    </div>
+    <button onclick="calculateLoan()">Calculate Loan</button>
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    async function fetchExchangeRate(baseCurrency, targetCurrency) {
+      try {
+        // Replace with your own API key
+        const apiKey = "your_api_key_here";
+        const url = `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${baseCurrency}/${targetCurrency}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.result === "success") {
+          return data.conversion_rate;
+        } else {
+          throw new Error("Failed to fetch exchange rate");
+        }
+      } catch (error) {
+        console.error("Error fetching exchange rate:", error);
+        return null;
+      }
+    }
+
+    async function calculateLoan() {
+      const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+      const interestRate = parseFloat(document.getElementById('interestRate').value);
+      const loanTerm = parseInt(document.getElementById('loanTerm').value);
+      const baseCurrency = document.getElementById('currency').value;
+      const targetCurrency = document.getElementById('convertTo').value;
+
+      if (isNaN(loanAmount) || isNaN(interestRate) || isNaN(loanTerm)) {
+        document.getElementById('result').innerHTML = "Please fill all fields correctly.";
+        return;
+      }
+
+      // Fetch real-time exchange rate
+      const exchangeRate = await fetchExchangeRate(baseCurrency, targetCurrency);
+      if (!exchangeRate) {
+        document.getElementById('result').innerHTML = "Failed to fetch exchange rates.";
+        return;
+      }
+
+      // Calculate monthly loan payment
+      const monthlyRate = (interestRate / 100) / 12;
+      const totalPayments = loanTerm * 12;
+      const monthlyPayment = (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -totalPayments));
+      const totalPayment = monthlyPayment * totalPayments;
+
+      // Convert to target currency
+      const convertedMonthly = monthlyPayment * exchangeRate;
+      const convertedTotal = totalPayment * exchangeRate;
+
+      // Display results
+      document.getElementById('result').innerHTML = `
+        <strong>Results:</strong><br>
+        Monthly Payment: ${convertedMonthly.toFixed(2)} ${targetCurrency}<br>
+        Total Payment: ${convertedTotal.toFixed(2)} ${targetCurrency}<br>
+        <small>Real-time rate: 1 ${baseCurrency} = ${exchangeRate.toFixed(2)} ${targetCurrency}</small>
+      `;
+    }
+  </script>
+</body>
+</html>
