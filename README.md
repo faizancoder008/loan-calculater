@@ -1,0 +1,1 @@
+This project is a powerful yet simple tool that helps users calculate their monthly loan installments (EMI) and perform currency conversions in real-time. It is designed for individuals and businesses who need to manage their finances effectively. The app is easy to use, accurate, and supports multiple currencies for seamless global transactions.
